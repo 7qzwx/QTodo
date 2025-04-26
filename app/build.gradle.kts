@@ -1,5 +1,7 @@
-import java.text.*
-import java.util.*
+
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 plugins {
     alias(libs.plugins.android.application)
@@ -66,6 +68,8 @@ android {
 
 
 dependencies {
+    //---------swipe-----------
+    implementation ("me.saket.swipe:swipe:1.3.0")
     //---------lottie动画----------
     implementation("com.github.LottieFiles:dotlottie-android:0.6.2")
     //--------hilt依赖注入----------

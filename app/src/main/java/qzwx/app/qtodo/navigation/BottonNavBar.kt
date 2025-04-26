@@ -32,9 +32,9 @@ fun BottomNavBar(navController: NavController) {
     val currentRoute = currentBackStackEntry?.destination?.route
 
     val items = listOf(
-        NavItem("笔记", Icons.Outlined.NoteAlt, NavRoutes.NotePage),
+        NavItem("待办", Icons.Outlined.Today, NavRoutes.TodoPage),
         NavItem("日历", null, NavRoutes.CalandarPage),
-        NavItem("待办", Icons.Outlined.Today, NavRoutes.TodoPage)
+        NavItem("笔记", Icons.Outlined.NoteAlt, NavRoutes.NotePage)
     )
 
 

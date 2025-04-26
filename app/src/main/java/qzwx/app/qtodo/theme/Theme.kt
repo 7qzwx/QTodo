@@ -1,42 +1,41 @@
 package qzwx.app.qtodo.theme
 
-import android.os.*
-import androidx.compose.foundation.*
+import android.os.Build
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.*
-import androidx.compose.runtime.*
-import androidx.compose.ui.graphics.*
-import androidx.compose.ui.platform.*
-import com.google.accompanist.systemuicontroller.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.SideEffect
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import com.google.accompanist.systemuicontroller.rememberSystemUiController
 
 private val DarkColorScheme = darkColorScheme(
-    primary = Purple80,
+    primary = Color(0xff00574A),
     secondary = PurpleGrey80,
     tertiary = Pink80,
-    surface = Color(0x80FFFBFD)
+    background = Color(0xFF141C25),
+    surface = Color(0xFF222A33),
+    onSurface = Color(0xFFF2F2F2),
+//    onSurfaceVariant = Color(0xFFF2F2F2),
 )
-
 private val LightColorScheme = lightColorScheme(
-    primary = Purple40,
+    primary = Color(0xff48AB93),
     secondary = PurpleGrey40,
     tertiary = Pink40,
-    surface = Color(0xFFFFFBFD)
-
-    /* Other default colors to override
-    background = Color(0xFFFFFBFE),
-    surface = Color(0xFFFFFBFE),
+    background = Color(0xFFF2F2F2),
+    surface = Color(0xFFFFFFFF),
     onPrimary = Color.White,
     onSecondary = Color.White,
     onTertiary = Color.White,
     onBackground = Color(0xFF1C1B1F),
     onSurface = Color(0xFF1C1B1F),
-    */
 )
 
 @Composable
 fun QDemoTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     // Dynamic color is available on Android 12+
-    dynamicColor: Boolean = true,
+    dynamicColor: Boolean = false,  //取消系统颜色
     content: @Composable () -> Unit
 ) {
     val colorScheme = when {

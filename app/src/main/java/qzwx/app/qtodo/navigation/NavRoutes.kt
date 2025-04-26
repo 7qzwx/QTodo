@@ -9,11 +9,12 @@ object NavRoutes {
     // 不需要底部导航的页面
 //    const val AiAccount = "AiAccount"
 
+    const val TodoDetailPage = "TodoDetailPage"
 
     // 需要显示底部导航的路径集合
     val bottomNavScreens = setOf(
-       NotePage,
+       TodoPage,
        CalandarPage,
-       TodoPage
+       NotePage
     )
 }
