@@ -1,5 +1,8 @@
 package qzwx.app.qtodo.page.todopage
 
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -14,8 +17,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.layout.onGloballyPositioned
@@ -28,6 +29,7 @@ import androidx.compose.ui.text.style.*
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.zIndex
 import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.launch
 import me.saket.swipe.SwipeAction
@@ -44,8 +46,6 @@ import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle
 import java.util.Locale
-import androidx.compose.animation.core.*
-import androidx.compose.ui.zIndex
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
@@ -221,11 +221,11 @@ fun SmallTopBar(
                 Icon(
                     imageVector = Icons.Default.FilterList,
                     contentDescription = "筛选",
-                    tint = MaterialTheme.colorScheme.onPrimaryContainer
+                    tint = MaterialTheme.colorScheme.onBackground
                 )
             }
             
-            DropdownMenu(
+            DropdownMenu(modifier = Modifier.background(MaterialTheme.colorScheme.surface),
                 expanded = showFilterMenu,
                 onDismissRequest = { showFilterMenu = false }
             ) {
