@@ -28,7 +28,7 @@ class WidgetDataService(private val context: Context) {
                 }
             }
         } catch (e: Exception) {
-            Log.e(TAG, "获取待办事项失败: ${e.message}")
+            Log.e(TAG, "获取待办事项失败", e)
             emptyList()
         }
     }
@@ -53,7 +53,7 @@ class WidgetDataService(private val context: Context) {
                 }
             }
         } catch (e: Exception) {
-            Log.e(TAG, "获取今日已完成待办事项失败: ${e.message}")
+            Log.e(TAG, "获取今日已完成待办事项失败", e)
             emptyList()
         }
     }
@@ -68,7 +68,7 @@ class WidgetDataService(private val context: Context) {
                 }
             }
         } catch (e: Exception) {
-            Log.e(TAG, "获取日记失败: ${e.message}")
+            Log.e(TAG, "获取日记失败", e)
             emptyList()
         }
     }
@@ -85,7 +85,7 @@ class WidgetDataService(private val context: Context) {
                 }
             }
         } catch (e: Exception) {
-            Log.e(TAG, "获取待办事项计数失败: ${e.message}")
+            Log.e(TAG, "获取待办事项计数失败", e)
             Pair(0, 0)
         }
     }

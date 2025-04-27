@@ -45,11 +45,8 @@ class WidgetSettingsActivity : Activity() {
             return
         }
         
-        Log.d(TAG, "打开设置界面，小组件ID: $appWidgetId")
-        
         // 获取当前刷新频率
         val currentInterval = getRefreshInterval(this, appWidgetId)
-        Log.d(TAG, "当前刷新间隔: $currentInterval 分钟")
         
         // 设置RadioGroup
         val radioGroup = findViewById<RadioGroup>(R.id.refresh_interval_group)
@@ -78,7 +75,6 @@ class WidgetSettingsActivity : Activity() {
             
             // 保存刷新频率
             saveRefreshInterval(this, appWidgetId, minutes)
-            Log.d(TAG, "保存刷新间隔: $minutes 分钟")
             
             // 更新小组件
             val appWidgetManager = AppWidgetManager.getInstance(this)
@@ -108,7 +104,6 @@ class WidgetSettingsActivity : Activity() {
             val prefs = context.getSharedPreferences(PREFS_NAME, 0).edit()
             prefs.putInt(PREF_PREFIX_KEY + appWidgetId, minutes)
             prefs.apply()
-            Log.d("WidgetSettings", "已保存刷新间隔: $minutes 分钟")
         }
         
         // 获取刷新频率
