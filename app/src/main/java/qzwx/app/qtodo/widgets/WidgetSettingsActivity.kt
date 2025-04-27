@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
+import android.view.View
 import android.widget.Button
 import android.widget.RadioButton
 import android.widget.RadioGroup
@@ -18,6 +19,9 @@ class WidgetSettingsActivity : Activity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        
+        // 设置窗口样式为对话框
+        setFinishOnTouchOutside(false)
         
         // 设置结果为取消，如果用户按了返回键，则不会更新小组件
         setResult(RESULT_CANCELED)
@@ -41,8 +45,11 @@ class WidgetSettingsActivity : Activity() {
             return
         }
         
+        Log.d(TAG, "打开设置界面，小组件ID: $appWidgetId")
+        
         // 获取当前刷新频率
         val currentInterval = getRefreshInterval(this, appWidgetId)
+        Log.d(TAG, "当前刷新间隔: $currentInterval 分钟")
         
         // 设置RadioGroup
         val radioGroup = findViewById<RadioGroup>(R.id.refresh_interval_group)
@@ -57,6 +64,10 @@ class WidgetSettingsActivity : Activity() {
         
         // 保存按钮点击事件
         findViewById<Button>(R.id.btn_save).setOnClickListener {
+            // 显示保存中状态
+            findViewById<Button>(R.id.btn_save).isEnabled = false
+            findViewById<Button>(R.id.btn_save).text = "保存中..."
+            
             val selectedId = radioGroup.checkedRadioButtonId
             val minutes = when (selectedId) {
                 R.id.rb_15min -> 15
@@ -67,6 +78,7 @@ class WidgetSettingsActivity : Activity() {
             
             // 保存刷新频率
             saveRefreshInterval(this, appWidgetId, minutes)
+            Log.d(TAG, "保存刷新间隔: $minutes 分钟")
             
             // 更新小组件
             val appWidgetManager = AppWidgetManager.getInstance(this)
@@ -79,7 +91,11 @@ class WidgetSettingsActivity : Activity() {
             val resultValue = Intent()
             resultValue.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
             setResult(RESULT_OK, resultValue)
-            finish()
+            
+            // 延迟关闭，让用户看到成功提示
+            findViewById<View>(android.R.id.content).postDelayed({
+                finish()
+            }, 800)
         }
     }
     

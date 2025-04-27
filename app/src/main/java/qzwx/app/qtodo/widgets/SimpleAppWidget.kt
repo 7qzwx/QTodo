@@ -56,18 +56,31 @@ class SimpleAppWidget : AppWidgetProvider() {
         if (ACTION_REFRESH_WIDGET == intent.action) {
             Log.d(TAG, "收到手动刷新广播")
             
-            // 通知AppWidgetManager刷新小组件
+            // 获取所有小组件ID
             val appWidgetManager = AppWidgetManager.getInstance(context)
             val appWidgetIds = appWidgetManager.getAppWidgetIds(
                 ComponentName(context, SimpleAppWidget::class.java)
             )
             
-            // 通知列表数据已更改
+            // 重要：先通知数据集变化，再更新小组件
             appWidgetManager.notifyAppWidgetViewDataChanged(appWidgetIds, R.id.todo_list_view)
             
             // 更新所有小组件
             for (appWidgetId in appWidgetIds) {
                 updateAppWidget(context, appWidgetManager, appWidgetId)
+            }
+        } else if (Intent.ACTION_VIEW == intent.action) {
+            // 处理列表项点击操作
+            val todoId = intent.getLongExtra("TODO_ID", -1)
+            if (todoId != -1L) {
+                Log.d(TAG, "用户点击了待办项目: ID = $todoId")
+                // 打开主应用并导航到详情页
+                val mainIntent = Intent()
+                mainIntent.setClassName(context.packageName, "qzwx.app.qtodo.MainActivity")
+                mainIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                mainIntent.putExtra("navigate_to", "todo_detail")
+                mainIntent.putExtra("todo_id", todoId)
+                context.startActivity(mainIntent)
             }
         }
     }
@@ -117,6 +130,7 @@ class SimpleAppWidget : AppWidgetProvider() {
             // 设置设置按钮点击事件
             val settingsIntent = Intent(context, WidgetSettingsActivity::class.java)
             settingsIntent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
+            settingsIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             val pendingSettingsIntent = PendingIntent.getActivity(
                 context, 
                 appWidgetId, 
@@ -141,8 +155,10 @@ class SimpleAppWidget : AppWidgetProvider() {
             // 设置ListView的适配器
             val serviceIntent = Intent(context, WidgetRemoteViewsService::class.java)
             serviceIntent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
-            serviceIntent.data = Uri.parse(serviceIntent.toUri(Intent.URI_INTENT_SCHEME))
+            // 确保Intent是唯一的
+            serviceIntent.data = Uri.parse("widget://qtodo/widget_id/$appWidgetId")
             views.setRemoteAdapter(R.id.todo_list_view, serviceIntent)
+            Log.d(TAG, "设置ListView适配器完成")
             
             // 设置空视图
             views.setEmptyView(R.id.todo_list_view, R.id.widget_empty_view)
@@ -151,7 +167,8 @@ class SimpleAppWidget : AppWidgetProvider() {
             val itemClickIntent = Intent(context, SimpleAppWidget::class.java)
             itemClickIntent.action = Intent.ACTION_VIEW
             itemClickIntent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
-            itemClickIntent.data = Uri.parse(itemClickIntent.toUri(Intent.URI_INTENT_SCHEME))
+            // 确保Intent是唯一的
+            itemClickIntent.data = Uri.parse("widget://qtodo/widget_id/$appWidgetId/item_click")
             
             val clickPendingIntent = PendingIntent.getBroadcast(
                 context,
@@ -160,6 +177,7 @@ class SimpleAppWidget : AppWidgetProvider() {
                 pendingIntentFlags
             )
             views.setPendingIntentTemplate(R.id.todo_list_view, clickPendingIntent)
+            Log.d(TAG, "设置列表项点击事件模板完成")
             
             // 获取数据服务
             val dataService = WidgetDataService(context)
@@ -174,13 +192,13 @@ class SimpleAppWidget : AppWidgetProvider() {
                 views.setTextViewText(R.id.widget_todo_count, "0/0 项待办事项")
             }
             
-            // 更新小组件
+            // 先更新小组件
             Log.d(TAG, "准备更新AppWidget: $appWidgetId")
             appWidgetManager.updateAppWidget(appWidgetId, views)
             
-            // 通知列表数据变化
+            // 然后通知数据变化
             appWidgetManager.notifyAppWidgetViewDataChanged(appWidgetId, R.id.todo_list_view)
-            Log.d(TAG, "小组件更新完成")
+            Log.d(TAG, "小组件更新完成，已通知数据变化")
             
         } catch (e: Exception) {
             Log.e(TAG, "小组件更新过程中发生异常: ${e.message}")
