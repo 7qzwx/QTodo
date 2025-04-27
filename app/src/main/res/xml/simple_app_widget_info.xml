@@ -5,7 +5,6 @@
     android:minHeight="110dp"
     android:previewImage="@android:drawable/sym_def_app_icon"
     android:resizeMode="horizontal|vertical"
-    android:updatePeriodMillis="1800000"
-    android:widgetCategory="home_screen"
-    android:configure="qzwx.app.qtodo.widgets.WidgetSettingsActivity">
+    android:updatePeriodMillis="3600000"
+    android:widgetCategory="home_screen">
 </appwidget-provider>

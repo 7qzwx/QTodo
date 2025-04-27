@@ -9,6 +9,7 @@ import kotlinx.coroutines.withContext
 import qzwx.app.qtodo.data.AppDatabase
 import qzwx.app.qtodo.data.Diary
 import qzwx.app.qtodo.data.Todo
+import java.time.LocalDateTime
 
 /**
  * 小组件数据服务类，用于获取待办事项和日记数据
@@ -28,6 +29,31 @@ class WidgetDataService(private val context: Context) {
             }
         } catch (e: Exception) {
             Log.e(TAG, "获取待办事项失败: ${e.message}")
+            emptyList()
+        }
+    }
+
+    // 获取今日已完成的待办事项列表
+    fun getTodayCompletedTodos(limit: Int = 2): List<Todo> {
+        return try {
+            val database = AppDatabase.getDatabase(context)
+            runBlocking {
+                withContext(Dispatchers.IO) {
+                    // 获取所有已完成的待办事项
+                    val allCompleted = database.todoDao().getCompletedTodos().first()
+                    
+                    // 今天的开始时间（凌晨0点）
+                    val today = LocalDateTime.now().toLocalDate().atStartOfDay()
+                    
+                    // 过滤出今天完成的待办事项（根据更新时间）
+                    val todayCompleted = allCompleted.filter { it.updatedAt.isAfter(today) }
+                    
+                    // 返回限定数量的结果
+                    todayCompleted.take(limit)
+                }
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "获取今日已完成待办事项失败: ${e.message}")
             emptyList()
         }
     }

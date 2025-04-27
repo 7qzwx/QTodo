@@ -6,9 +6,11 @@ import android.appwidget.AppWidgetProvider
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.graphics.Paint
 import android.net.Uri
 import android.os.Build
 import android.util.Log
+import android.view.View
 import android.widget.RemoteViews
 import qzwx.app.qtodo.R
 
@@ -62,8 +64,17 @@ class SimpleAppWidget : AppWidgetProvider() {
                 ComponentName(context, SimpleAppWidget::class.java)
             )
             
+            Log.d(TAG, "准备刷新 ${appWidgetIds.size} 个小组件")
+            
             // 重要：先通知数据集变化，再更新小组件
-            appWidgetManager.notifyAppWidgetViewDataChanged(appWidgetIds, R.id.todo_list_view)
+            for (appWidgetId in appWidgetIds) {
+                try {
+                    Log.d(TAG, "通知小组件 $appWidgetId 数据变化")
+                    appWidgetManager.notifyAppWidgetViewDataChanged(appWidgetId, R.id.todo_list_view)
+                } catch (e: Exception) {
+                    Log.e(TAG, "通知数据变化失败: ${e.message}", e)
+                }
+            }
             
             // 更新所有小组件
             for (appWidgetId in appWidgetIds) {
@@ -155,10 +166,10 @@ class SimpleAppWidget : AppWidgetProvider() {
             // 设置ListView的适配器
             val serviceIntent = Intent(context, WidgetRemoteViewsService::class.java)
             serviceIntent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
-            // 确保Intent是唯一的
-            serviceIntent.data = Uri.parse("widget://qtodo/widget_id/$appWidgetId")
+            // 确保Intent是唯一的，添加时间戳
+            serviceIntent.data = Uri.parse("widget://qtodo/widget_id/$appWidgetId?t=${System.currentTimeMillis()}")
             views.setRemoteAdapter(R.id.todo_list_view, serviceIntent)
-            Log.d(TAG, "设置ListView适配器完成")
+            Log.d(TAG, "设置ListView适配器完成，URI: widget://qtodo/widget_id/$appWidgetId?t=${System.currentTimeMillis()}")
             
             // 设置空视图
             views.setEmptyView(R.id.todo_list_view, R.id.widget_empty_view)
@@ -190,6 +201,53 @@ class SimpleAppWidget : AppWidgetProvider() {
             } catch (e: Exception) {
                 Log.e(TAG, "获取待办事项计数失败: ${e.message}")
                 views.setTextViewText(R.id.widget_todo_count, "0/0 项待办事项")
+            }
+            
+            // 更新已完成待办事项
+            try {
+                val completedTodos = dataService.getTodayCompletedTodos(2)
+                Log.d(TAG, "获取今日已完成待办事项: ${completedTodos.size} 项")
+                
+                if (completedTodos.isEmpty()) {
+                    // 没有已完成的待办事项
+                    views.setViewVisibility(R.id.no_completed_text, View.VISIBLE)
+                    views.setViewVisibility(R.id.completed_item_1, View.GONE)
+                    views.setViewVisibility(R.id.completed_item_2, View.GONE)
+                } else {
+                    // 隐藏提示文本
+                    views.setViewVisibility(R.id.no_completed_text, View.GONE)
+                    
+                    // 设置第一个已完成待办事项
+                    if (completedTodos.size > 0) {
+                        val item1 = completedTodos[0]
+                        views.setViewVisibility(R.id.completed_item_1, View.VISIBLE)
+                        
+                        // 应用删除线样式 - 使用设置标志的方式
+                        views.setTextViewText(R.id.completed_title_1, item1.title)
+                        // 注意：RemoteViews不支持直接设置字体样式，只能通过设置标志
+                        views.setInt(R.id.completed_title_1, "setPaintFlags", Paint.STRIKE_THRU_TEXT_FLAG)
+                    } else {
+                        views.setViewVisibility(R.id.completed_item_1, View.GONE)
+                    }
+                    
+                    // 设置第二个已完成待办事项
+                    if (completedTodos.size > 1) {
+                        val item2 = completedTodos[1]
+                        views.setViewVisibility(R.id.completed_item_2, View.VISIBLE)
+                        
+                        // 应用删除线样式 - 使用设置标志的方式
+                        views.setTextViewText(R.id.completed_title_2, item2.title)
+                        // 注意：RemoteViews不支持直接设置字体样式，只能通过设置标志
+                        views.setInt(R.id.completed_title_2, "setPaintFlags", Paint.STRIKE_THRU_TEXT_FLAG)
+                    } else {
+                        views.setViewVisibility(R.id.completed_item_2, View.GONE)
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "获取今日已完成待办事项失败: ${e.message}", e)
+                views.setViewVisibility(R.id.no_completed_text, View.VISIBLE)
+                views.setViewVisibility(R.id.completed_item_1, View.GONE)
+                views.setViewVisibility(R.id.completed_item_2, View.GONE)
             }
             
             // 先更新小组件

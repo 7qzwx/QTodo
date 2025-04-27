@@ -44,6 +44,99 @@
             android:tint="#FFFFFF" />
     </LinearLayout>
 
+    <!-- 底部已完成待办信息栏 -->
+    <LinearLayout
+        android:id="@+id/widget_completed_bar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/widget_todo_count"
+        android:orientation="vertical"
+        android:background="#DBEFDC"
+        android:padding="8dp">
+        
+        <!-- 已完成标题 -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="今日已完成"
+            android:textSize="12sp"
+            android:textColor="#388E3C"
+            android:textStyle="italic" />
+            
+        <!-- 已完成项目1 -->
+        <LinearLayout
+            android:id="@+id/completed_item_1"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:paddingTop="4dp"
+            android:visibility="gone">
+            
+            <!-- 圆点指示器 -->
+            <ImageView
+                android:layout_width="10dp"
+                android:layout_height="10dp"
+                android:layout_gravity="center_vertical"
+                android:layout_marginStart="4dp"
+                android:layout_marginEnd="8dp"
+                android:src="@android:drawable/radiobutton_on_background"
+                android:tint="#8BC34A" />
+                
+            <!-- 已完成文本 -->
+            <TextView
+                android:id="@+id/completed_title_1"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="已完成项目1"
+                android:textSize="12sp"
+                android:textColor="#757575"
+                android:maxLines="1"
+                android:ellipsize="end" />
+        </LinearLayout>
+            
+        <!-- 已完成项目2 -->
+        <LinearLayout
+            android:id="@+id/completed_item_2"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:paddingTop="4dp"
+            android:visibility="gone">
+            
+            <!-- 圆点指示器 -->
+            <ImageView
+                android:layout_width="10dp"
+                android:layout_height="10dp"
+                android:layout_gravity="center_vertical"
+                android:layout_marginStart="4dp"
+                android:layout_marginEnd="8dp"
+                android:src="@android:drawable/radiobutton_on_background"
+                android:tint="#8BC34A" />
+                
+            <!-- 已完成文本 -->
+            <TextView
+                android:id="@+id/completed_title_2"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="已完成项目2"
+                android:textSize="12sp"
+                android:textColor="#757575"
+                android:maxLines="1"
+                android:ellipsize="end" />
+        </LinearLayout>
+            
+        <!-- 无已完成项目提示 -->
+        <TextView
+            android:id="@+id/no_completed_text"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="暂无已完成事项"
+            android:textSize="12sp"
+            android:textColor="#9E9E9E"
+            android:paddingTop="4dp"
+            android:paddingStart="12dp" />
+    </LinearLayout>
+
     <!-- 底部计数 - 居中显示 -->
     <TextView
         android:id="@+id/widget_todo_count"
@@ -63,7 +156,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_below="@id/widget_header"
-        android:layout_above="@id/widget_todo_count"
+        android:layout_above="@id/widget_completed_bar"
         android:divider="#AACFD8DC"
         android:dividerHeight="1dp"
         android:background="#F1F8E9" />
@@ -74,7 +167,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_below="@id/widget_header"
-        android:layout_above="@id/widget_todo_count"
+        android:layout_above="@id/widget_completed_bar"
         android:background="#F1F8E9">
         
         <LinearLayout
