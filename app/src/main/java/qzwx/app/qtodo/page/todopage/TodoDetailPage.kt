@@ -12,6 +12,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -24,6 +25,7 @@ import kotlinx.coroutines.launch
 import qzwx.app.qtodo.data.AppDatabase
 import qzwx.app.qtodo.data.Todo
 import qzwx.app.qtodo.repository.TodoRepository
+import qzwx.app.qtodo.utils.SnackbarManager
 import qzwx.app.viewmodel.TodoViewModel
 import qzwx.app.viewmodel.TodoViewModelFactory
 import java.time.LocalDate
@@ -58,6 +60,28 @@ fun TodoDetailPage(
     var priority by remember { mutableStateOf(0) }
     var dueDate by remember { mutableStateOf<LocalDateTime?>(null) }
     var isCompleted by remember { mutableStateOf(false) }
+    
+    // 处理完成状态变化
+    val handleCompletedChange = { newValue: Boolean ->
+        isCompleted = newValue
+        // 如果不是编辑模式，立即更新数据库
+        if (!isEditing && todo != null) {
+            val updatedTodo = todo!!.copy(
+                isCompleted = newValue,
+                updatedAt = LocalDateTime.now()
+            )
+            viewModel.updateTodo(updatedTodo)
+            todo = updatedTodo
+            
+            // 显示提示信息
+            coroutineScope.launch {
+                SnackbarManager.showSnackbar(
+                    snackbarHostState,
+                    if (newValue) "已标记为完成" else "已标记为未完成"
+                )
+            }
+        }
+    }
     
     var showDeleteConfirmation by remember { mutableStateOf(false) }
     var showDatePicker by remember { mutableStateOf(false) }
@@ -453,7 +477,10 @@ fun TodoDetailPage(
                                     isEditing = false
                                     todo = updatedTodo
                                     coroutineScope.launch {
-                                        snackbarHostState.showSnackbar("更新成功")
+                                        SnackbarManager.showSnackbar(
+                                            snackbarHostState,
+                                            "更新成功"
+                                        )
                                     }
                                 }
                             },
@@ -512,7 +539,7 @@ fun TodoDetailPage(
                 dueDate = dueDate,
                 onDueDateClick = { showDatePicker = true },
                 isCompleted = isCompleted,
-                onIsCompletedChange = { isCompleted = it },
+                onIsCompletedChange = handleCompletedChange,
                 modifier = Modifier
                     .padding(innerPadding)
                     .fillMaxSize()
@@ -650,38 +677,142 @@ fun TodoDetailContent(
                         text = "优先级",
                         style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.onSurface,
-                        textAlign = TextAlign.Center
+                        textAlign = TextAlign.Center,
+                        fontWeight = FontWeight.Medium
                     )
                     
                     Spacer(modifier = Modifier.height(8.dp))
                     
+                    // 优先级选择卡片
                     Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.Center
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
+                            .padding(vertical = 8.dp, horizontal = 8.dp),
+                        horizontalArrangement = Arrangement.SpaceEvenly
                     ) {
                         priorityLabels.forEachIndexed { index, label ->
-                            FilterChip(
-                                selected = priority == index,
-                                onClick = { onPriorityChange(index) },
-                                label = { Text(label) },
-                                leadingIcon = {
-                                    Row {
-                                        repeat(index + 1) {
-                                            Icon(
-                                                imageVector = Icons.Outlined.Star,
-                                                contentDescription = null,
-                                                tint = MaterialTheme.colorScheme.primary,
-                                                modifier = Modifier.size(16.dp)
-                                            )
-                                        }
+                            val isSelected = priority == index
+                            val backgroundColor = when {
+                                isSelected -> when(index) {
+                                    0 -> MaterialTheme.colorScheme.tertiary.copy(alpha = 0.2f)
+                                    1 -> MaterialTheme.colorScheme.secondary.copy(alpha = 0.2f)
+                                    else -> MaterialTheme.colorScheme.error.copy(alpha = 0.2f)
+                                }
+                                else -> Color.Transparent
+                            }
+                            
+                            val textColor = when {
+                                isSelected -> when(index) {
+                                    0 -> MaterialTheme.colorScheme.tertiary
+                                    1 -> MaterialTheme.colorScheme.secondary
+                                    else -> MaterialTheme.colorScheme.error
+                                }
+                                else -> MaterialTheme.colorScheme.onSurfaceVariant
+                            }
+                            
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(backgroundColor)
+                                    .clickable { onPriorityChange(index) }
+                                    .padding(vertical = 8.dp, horizontal = 4.dp)
+                            ) {
+                                // 优先级图标
+                                Row {
+                                    repeat(index + 1) {
+                                        Icon(
+                                            imageVector = Icons.Outlined.Star,
+                                            contentDescription = null,
+                                            tint = textColor,
+                                            modifier = Modifier.size(20.dp)
+                                        )
                                     }
-                                },
-                                colors = FilterChipDefaults.filterChipColors(
-                                    selectedContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
-                                    selectedLabelColor = MaterialTheme.colorScheme.onSurface
-                                ),
-                                modifier = Modifier.padding(horizontal = 4.dp)
+                                }
+                                
+                                Spacer(modifier = Modifier.height(4.dp))
+                                
+                                // 优先级文本
+                                Text(
+                                    text = label,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                                    color = textColor
+                                )
+                            }
+                            
+                            if (index < priorityLabels.size - 1) {
+                                Spacer(modifier = Modifier.width(8.dp))
+                            }
+                        }
+                    }
+                    
+                    // 显示当前选择的优先级状态
+                    Spacer(modifier = Modifier.height(16.dp))
+                    
+                    val priorityColor = when(priority) {
+                        0 -> MaterialTheme.colorScheme.tertiary
+                        1 -> MaterialTheme.colorScheme.secondary
+                        else -> MaterialTheme.colorScheme.error
+                    }
+                    
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(
+                            containerColor = priorityColor.copy(alpha = 0.1f)
+                        ),
+                        border = BorderStroke(1.dp, priorityColor.copy(alpha = 0.3f)),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 12.dp, horizontal = 16.dp),
+                            horizontalArrangement = Arrangement.Center,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.PriorityHigh,
+                                contentDescription = null,
+                                tint = priorityColor,
+                                modifier = Modifier.size(24.dp)
                             )
+                            
+                            Spacer(modifier = Modifier.width(12.dp))
+                            
+                            Column {
+                                Text(
+                                    text = "任务优先级",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                                
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier.padding(top = 4.dp)
+                                ) {
+                                    repeat(priority + 1) {
+                                        Icon(
+                                            imageVector = Icons.Filled.Star,
+                                            contentDescription = null,
+                                            tint = priorityColor,
+                                            modifier = Modifier.size(16.dp)
+                                        )
+                                    }
+                                    
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    
+                                    Text(
+                                        text = "${priorityLabels[priority]}优先级",
+                                        style = MaterialTheme.typography.bodyLarge,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = priorityColor
+                                    )
+                                }
+                            }
                         }
                     }
                     
@@ -718,25 +849,72 @@ fun TodoDetailContent(
                     // 完成状态
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.Center
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(
-                            text = "完成状态",
-                            style = MaterialTheme.typography.bodyLarge
-                        )
-                        
-                        Spacer(modifier = Modifier.width(16.dp))
-                        
-                        Switch(
-                            checked = isCompleted,
-                            onCheckedChange = onIsCompletedChange,
-                            colors = SwitchDefaults.colors(
-                                checkedThumbColor = MaterialTheme.colorScheme.primary,
-                                checkedTrackColor = MaterialTheme.colorScheme.primaryContainer,
-                                uncheckedThumbColor = MaterialTheme.colorScheme.outline
+                        // 优先级指示器
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.padding(bottom = 8.dp)
+                        ) {
+                            repeat(todo.priority + 1) {
+                                Icon(
+                                    imageVector = Icons.Outlined.Star,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                            }
+                            
+                            Spacer(modifier = Modifier.width(8.dp))
+                            
+                            Text(
+                                text = priorityLabels[todo.priority],
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
-                        )
+                        }
+                        
+                        // 完成状态开关
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(16.dp))
+                                .background(
+                                    MaterialTheme.colorScheme.surface
+                                )
+                                .padding(
+                                    start = 12.dp,
+                                    end = 8.dp,
+                                    top = 4.dp,
+                                    bottom = 4.dp
+                                )
+                        ) {
+
+                            Text(
+                                text = if (isCompleted) "已完成" else "未完成",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = if (isCompleted) 
+                                   Color.Green.copy(0.5f)
+                                else 
+                                    Color.Red.copy(0.5f)
+                            )
+                            
+                            Spacer(modifier = Modifier.width(8.dp))
+                            
+                            Switch(
+                                checked = isCompleted,
+                                onCheckedChange = { newValue ->
+                                    onIsCompletedChange(newValue)
+                                },
+                                colors = SwitchDefaults.colors(
+                                    checkedThumbColor = Color.Green.copy(0.5f),
+                                    checkedTrackColor = MaterialTheme.colorScheme.primary,
+                                    uncheckedThumbColor =  Color.Red.copy(0.5f)
+                                ),
+                                modifier = Modifier.padding(vertical = 2.dp)
+                            )
+                        }
                     }
                 }
             }
@@ -762,7 +940,7 @@ fun TodoDetailContent(
                     // 创建时间和优先级
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.Center,
+                        horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         // 优先级指示器
@@ -785,6 +963,45 @@ fun TodoDetailContent(
                                 text = priorityLabels[todo.priority],
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                        
+                        // 完成状态开关
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(16.dp))
+                                .background(
+                                    MaterialTheme.colorScheme.surface
+                                )
+                                .padding(
+                                    start = 12.dp,
+                                    end = 8.dp,
+                                    top = 4.dp,
+                                    bottom = 4.dp
+                                )
+                        ) {
+                            Text(
+                                text = if (isCompleted) "已完成" else "未完成",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = if (isCompleted) 
+                                    Color.Green.copy(0.5f)
+                                else 
+                                    Color.Red.copy(0.5f)
+                            )
+                            
+                            Spacer(modifier = Modifier.width(8.dp))
+                            
+                            Switch(
+                                checked = isCompleted,
+                                onCheckedChange = { newValue ->
+                                    onIsCompletedChange(newValue)
+                                },
+                                colors = SwitchDefaults.colors(
+                                    checkedThumbColor = Color.Green.copy(0.5f),
+                                    checkedTrackColor = MaterialTheme.colorScheme.primary,
+                                    uncheckedThumbColor = Color.Red.copy(0.5f)
+                                )
                             )
                         }
                     }
@@ -900,7 +1117,9 @@ fun TodoDetailContent(
                 )
             ) {
                 Column(
-                    modifier = Modifier.padding(20.dp),
+                    modifier = Modifier
+                        .padding(20.dp)
+                        .fillMaxWidth(),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     // 描述
@@ -923,7 +1142,7 @@ fun TodoDetailContent(
                                 lineHeight = 28.sp
                             ),
                             color = MaterialTheme.colorScheme.onSurface,
-                            textAlign = TextAlign.Center
+                            textAlign = TextAlign.Start
                         )
                     } else {
                         Text(

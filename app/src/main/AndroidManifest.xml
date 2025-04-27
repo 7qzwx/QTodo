@@ -7,9 +7,9 @@
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
-        android:icon="@mipmap/todo1"
+        android:icon="@mipmap/qtodo"
         android:label="@string/app_name"
-        android:roundIcon="@mipmap/todo1_round"
+        android:roundIcon="@mipmap/qtodo_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.QTodo"
         tools:targetApi="31">

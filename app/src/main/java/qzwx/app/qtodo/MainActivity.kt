@@ -7,15 +7,12 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.pager.HorizontalPager
-import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import kotlinx.coroutines.launch
 import qzwx.app.qtodo.navigation.BottomNavBar
 import qzwx.app.qtodo.navigation.NavRoutes
 import qzwx.app.qtodo.navigation.SimpleNavHost
@@ -66,8 +63,6 @@ class MainActivity : ComponentActivity() {
                 }
                 
                 // 创建协程作用域用于页面切换
-                val coroutineScope = rememberCoroutineScope()
-
                 Scaffold(
                     modifier = Modifier.fillMaxSize(),
                     bottomBar = {
@@ -129,7 +124,6 @@ fun MainContent(
     onNavigateToDetail: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val coroutineScope = rememberCoroutineScope()
     
     // 使用pagerState来控制ViewPager
     val pagerState = rememberPagerState(

@@ -31,6 +31,7 @@ import qzwx.app.viewmodel.DiaryViewModelFactory
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+import qzwx.app.qtodo.utils.SnackbarManager
 
 // 添加首行缩进的辅助函数
 fun addIndentation(text: String): String {
@@ -171,7 +172,10 @@ fun DiaryDetailPage(
                                     diary = updatedDiary
                                     isEditing = false
                                     coroutineScope.launch {
-                                        snackbarHostState.showSnackbar("日记已更新")
+                                        SnackbarManager.showSnackbar(
+                                            snackbarHostState,
+                                            "日记已更新"
+                                        )
                                     }
                                 }
                             }) {

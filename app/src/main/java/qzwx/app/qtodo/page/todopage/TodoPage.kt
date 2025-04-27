@@ -1,5 +1,6 @@
 package qzwx.app.qtodo.page.todopage
 
+import androidx.compose.animation.*
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -50,6 +51,7 @@ import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle
 import java.util.Locale
+import qzwx.app.qtodo.utils.SnackbarManager
 
 // 添加时间轴节点位置枚举
 enum class TimelineNodePosition {
@@ -82,6 +84,12 @@ fun TodoPage(
     val coroutineScope = rememberCoroutineScope()
     val showAddTodoDialog = remember { mutableStateOf(false) }
 
+    // 获取所有未完成的待办事项用于表格展示
+    val activeTodos by viewModel.activeTodos.collectAsState(initial = emptyList())
+    
+    // 是否显示待办概览表格
+    var showTodoTable by remember { mutableStateOf(true) }
+
     // 用于计算每天的todo数量
     val todosCountByDate = remember(todos) {
         todos.groupBy { LocalDate.from(it.createdAt) }
@@ -95,7 +103,10 @@ fun TodoPage(
                 viewModel.addTodo(title, description, priority, dueDate)
                 showAddTodoDialog.value = false
                 coroutineScope.launch {
-                    snackbarHostState.showSnackbar("添加成功：$title")
+                    SnackbarManager.showSnackbar(
+                        snackbarHostState,
+                        "添加成功：$title"
+                    )
                 }
             }
         )
@@ -136,64 +147,79 @@ fun TodoPage(
                 .padding(innerPadding)
                 .background(MaterialTheme.colorScheme.background)
         ) {
-            if (todos.isEmpty()) {
-                EmptyTodoList(filterType = uiState.filterType)
-            } else {
-                val groupedTodos = todos.groupBy { 
-                    LocalDate.from(it.createdAt)
-                }.toSortedMap(compareByDescending { it })
+            Column {
+                // 添加未完成待办表格
+                TodoOverviewTable(
+                    activeTodos = activeTodos,
+                    showTable = showTodoTable,
+                    onToggleTableVisibility = { showTodoTable = !showTodoTable },
+                    onTodoClick = onTodoClick,
+                    onViewAllActive = { 
+                        // 将过滤器切换到"进行中"类型
+                        viewModel.updateFilterType(TodoFilterType.ACTIVE)
+                    }
+                )
                 
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 90.dp),
-                    verticalArrangement = Arrangement.spacedBy(0.dp)
-                ) {
-                    groupedTodos.forEach { (date, todosForDate) ->
-                        stickyHeader(key = "date-$date") {
-                            Surface(
-                                color = MaterialTheme.colorScheme.background
-                            ) {
-                                DateHeader(date = date, todoCount = todosForDate.size)
-                            }
-                        }
-                        
-                        // 按照创建时间排序
-                        val sortedTodos = todosForDate.sortedByDescending { it.createdAt }
-                        
-                        items(sortedTodos, key = { it.id }) { todo ->
-                            // 确定当前Todo在列表中的位置
-                            val position = when {
-                                todo == sortedTodos.first() -> TimelineNodePosition.FIRST
-                                todo == sortedTodos.last() -> TimelineNodePosition.LAST
-                                else -> TimelineNodePosition.MIDDLE
+                // 时间轴显示待办内容
+                if (todos.isEmpty()) {
+                    EmptyTodoList(filterType = uiState.filterType)
+                } else {
+                    val groupedTodos = todos.groupBy { 
+                        LocalDate.from(it.createdAt)
+                    }.toSortedMap(compareByDescending { it })
+                    
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 90.dp),
+                        verticalArrangement = Arrangement.spacedBy(0.dp)
+                    ) {
+                        groupedTodos.forEach { (date, todosForDate) ->
+                            stickyHeader(key = "date-$date") {
+                                Surface(
+                                    color = MaterialTheme.colorScheme.background
+                                ) {
+                                    DateHeader(date = date, todoCount = todosForDate.size)
+                                }
                             }
                             
-                            TimelineItem(
-                                todo = todo,
-                                onToggleCompleted = { 
-                                    viewModel.toggleTodoCompleted(todo)
-                                },
-                                onDelete = {
-                                    viewModel.deleteTodo(todo)
-                                    coroutineScope.launch {
-                                        val result = snackbarHostState.showSnackbar(
-                                            message = "已删除：${todo.title}",
-                                            actionLabel = "撤销",
-                                            duration = SnackbarDuration.Short
-                                        )
-                                        if (result == SnackbarResult.ActionPerformed) {
-                                            viewModel.addTodo(
-                                                todo.title,
-                                                todo.description,
-                                                todo.priority,
-                                                todo.dueDate
+                            // 按照创建时间排序
+                            val sortedTodos = todosForDate.sortedByDescending { it.createdAt }
+                            
+                            items(sortedTodos, key = { it.id }) { todo ->
+                                // 确定当前Todo在列表中的位置
+                                val position = when {
+                                    todo == sortedTodos.first() -> TimelineNodePosition.FIRST
+                                    todo == sortedTodos.last() -> TimelineNodePosition.LAST
+                                    else -> TimelineNodePosition.MIDDLE
+                                }
+                                
+                                TimelineItem(
+                                    todo = todo,
+                                    onToggleCompleted = { 
+                                        viewModel.toggleTodoCompleted(todo)
+                                    },
+                                    onDelete = {
+                                        viewModel.deleteTodo(todo)
+                                        coroutineScope.launch {
+                                            val result = SnackbarManager.showSnackbar(
+                                                snackbarHostState,
+                                                "已删除：${todo.title}",
+                                                "撤销"
                                             )
+                                            if (result) {
+                                                viewModel.addTodo(
+                                                    todo.title,
+                                                    todo.description,
+                                                    todo.priority,
+                                                    todo.dueDate
+                                                )
+                                            }
                                         }
-                                    }
-                                },
-                                onTodoClick = { onTodoClick(todo.id) },
-                                position = position,
-                            )
+                                    },
+                                    onTodoClick = { onTodoClick(todo.id) },
+                                    position = position,
+                                )
+                            }
                         }
                     }
                 }
@@ -1212,4 +1238,216 @@ private fun formatDateTime(dateTime: LocalDateTime): String {
 private fun formatTime(dateTime: LocalDateTime): String {
     val formatter = DateTimeFormatter.ofPattern("HH:mm")
     return dateTime.format(formatter)
+}
+
+@Composable
+fun TodoOverviewTable(
+    activeTodos: List<Todo>,
+    showTable: Boolean,
+    onToggleTableVisibility: () -> Unit,
+    onTodoClick: (Long) -> Unit,
+    onViewAllActive: () -> Unit
+) {
+    // 可折叠部分
+    AnimatedVisibility(
+        visible = showTable,
+        enter = expandVertically() + fadeIn(),
+        exit = shrinkVertically() + fadeOut()
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(MaterialTheme.colorScheme.surface)
+                .padding(horizontal = 16.dp, vertical = 8.dp)
+        ) {
+            // 表格标题栏
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 8.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "待办概览（${activeTodos.size}）",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                
+                // 展开/折叠按钮
+                IconButton(
+                    onClick = onToggleTableVisibility,
+                    modifier = Modifier.size(24.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.ExpandLess,
+                        contentDescription = "折叠表格",
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+            
+            if (activeTodos.isEmpty()) {
+                // 没有未完成待办的情况
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 16.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "恭喜！暂无未完成的待办",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+            } else {
+                // 表格头部
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f))
+                        .padding(vertical = 8.dp, horizontal = 8.dp)
+                ) {
+                    Text(
+                        text = "优先级",
+                        style = MaterialTheme.typography.bodySmall,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.width(60.dp)
+                    )
+                    Text(
+                        text = "内容",
+                        style = MaterialTheme.typography.bodySmall,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.weight(1f)
+                    )
+                    Text(
+                        text = "截止时间",
+                        style = MaterialTheme.typography.bodySmall,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.width(120.dp)
+                    )
+                }
+                
+                // 表格内容 - 最多显示5项，有更多显示"查看更多"按钮
+                val displayTodos = if (activeTodos.size > 5) activeTodos.take(5) else activeTodos
+                
+                displayTodos.forEach { todo ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { onTodoClick(todo.id) }
+                            .padding(vertical = 12.dp, horizontal = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        // 优先级
+                        Row(
+                            modifier = Modifier.width(60.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            repeat(todo.priority + 1) {
+                                Icon(
+                                    imageVector = Icons.Outlined.Star,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                            }
+                        }
+                        
+                        // 标题
+                        Text(
+                            text = todo.title,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.weight(1f)
+                        )
+                        
+                        // 截止时间
+                        todo.dueDate?.let { dueDate ->
+                            val today = LocalDate.now()
+                            val dueDateLocalDate = LocalDate.from(dueDate)
+                            val isOverdue = dueDateLocalDate.isBefore(today)
+                            
+                            Text(
+                                text = formatDateTime(dueDate),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = if (isOverdue) 
+                                    MaterialTheme.colorScheme.error 
+                                else 
+                                    MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.width(120.dp)
+                            )
+                        } ?: Text(
+                            text = "无截止日期",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+                            modifier = Modifier.width(120.dp)
+                        )
+                    }
+                    
+                    Divider(
+                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
+                        thickness = 0.5.dp
+                    )
+                }
+                
+                // 如果有更多待办，显示"查看更多"按钮
+                if (activeTodos.size > 5) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 8.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        TextButton(
+                            onClick = onViewAllActive
+                        ) {
+                            Text(
+                                text = "查看全部${activeTodos.size}个待办 >",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    // 当表格处于折叠状态时，显示一个简洁的小条
+    AnimatedVisibility(
+        visible = !showTable,
+        enter = expandVertically() + fadeIn(),
+        exit = shrinkVertically() + fadeOut()
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(MaterialTheme.colorScheme.surface)
+                .clickable(onClick = onToggleTableVisibility)
+                .padding(horizontal = 16.dp, vertical = 8.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "待办概览（${activeTodos.size}）",
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Medium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            
+            Icon(
+                imageVector = Icons.Default.ExpandMore,
+                contentDescription = "展开表格",
+                tint = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
 }
