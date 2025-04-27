@@ -17,6 +17,9 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.layout.onGloballyPositioned
@@ -27,6 +30,7 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.*
 import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
@@ -46,6 +50,13 @@ import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle
 import java.util.Locale
+
+// 添加时间轴节点位置枚举
+enum class TimelineNodePosition {
+    FIRST,
+    MIDDLE,
+    LAST
+}
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
@@ -150,6 +161,13 @@ fun TodoPage(
                         val sortedTodos = todosForDate.sortedByDescending { it.createdAt }
                         
                         items(sortedTodos, key = { it.id }) { todo ->
+                            // 确定当前Todo在列表中的位置
+                            val position = when {
+                                todo == sortedTodos.first() -> TimelineNodePosition.FIRST
+                                todo == sortedTodos.last() -> TimelineNodePosition.LAST
+                                else -> TimelineNodePosition.MIDDLE
+                            }
+                            
                             TimelineItem(
                                 todo = todo,
                                 onToggleCompleted = { 
@@ -174,7 +192,7 @@ fun TodoPage(
                                     }
                                 },
                                 onTodoClick = { onTodoClick(todo.id) },
-                                modifier = Modifier.animateItemPlacement()
+                                position = position,
                             )
                         }
                     }
@@ -216,7 +234,6 @@ fun SmallTopBar(
                 modifier = Modifier
                     .size(36.dp)
                     .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.7f))
             ) {
                 Icon(
                     imageVector = Icons.Default.FilterList,
@@ -388,7 +405,13 @@ fun TimelineItem(
     onToggleCompleted: () -> Unit,
     onDelete: () -> Unit,
     onTodoClick: () -> Unit,
-    modifier: Modifier = Modifier
+    position: TimelineNodePosition,
+    modifier: Modifier = Modifier,
+    nodeColor: Color = MaterialTheme.colorScheme.primary,
+    nodeSize: Dp = 10.dp,
+    lineWidth: Dp = 2.dp,
+    contentStartOffset: Dp = 16.dp,
+    spacerBetweenNodes: Dp = 8.dp
 ) {
     var cardHeight by remember { mutableStateOf(0) }
     val density = LocalDensity.current
@@ -423,44 +446,64 @@ fun TimelineItem(
         Box(
             modifier = Modifier
                 .width(50.dp)
-                .height(with(density) { cardHeight.toDp() })
-                .padding(end = 8.dp),
+                .height(with(density) { cardHeight.toDp() + spacerBetweenNodes })
+                .padding(end = 8.dp)
+                .drawBehind {
+                    // 绘制时间轴线
+                    val lineColor = nodeColor.copy(alpha = 0.3f)
+                    // 计算圆点中心
+                    val centerX = size.width / 2
+                    val centerY = size.height / 2
+                    
+                    // 绘制时间轴线
+                    when (position) {
+                        TimelineNodePosition.FIRST -> {
+                            // 对于第一个节点，只绘制从中心到底部的线
+                            drawLine(
+                                color = lineColor,
+                                start = Offset(centerX, centerY),
+                                end = Offset(centerX, size.height),
+                                strokeWidth = lineWidth.toPx()
+                            )
+                        }
+                        TimelineNodePosition.MIDDLE -> {
+                            // 对于中间节点，绘制贯穿整个高度的线
+                            drawLine(
+                                color = lineColor,
+                                start = Offset(centerX, 0f),
+                                end = Offset(centerX, size.height),
+                                strokeWidth = lineWidth.toPx()
+                            )
+                        }
+                        TimelineNodePosition.LAST -> {
+                            // 对于最后一个节点，只绘制从顶部到中心的线
+                            drawLine(
+                                color = lineColor,
+                                start = Offset(centerX, 0f),
+                                end = Offset(centerX, centerY),
+                                strokeWidth = lineWidth.toPx()
+                            )
+                        }
+                    }
+                    
+                    // 绘制节点圆点
+                    drawCircle(
+                        color = if (todo.isCompleted) nodeColor.copy(alpha = 0.6f) else nodeColor,
+                        radius = nodeSize.toPx() / 2,
+                        center = Offset(centerX, centerY)
+                    )
+                },
             contentAlignment = Alignment.Center
         ) {
-            // 竖线贯穿整个高度
-            Box(
+            // 时间
+            Text(
+                text = formatTime(todo.createdAt),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier
-                    .fillMaxHeight()
-                    .width(2.dp)
-                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.3f))
+                    .align(Alignment.Center)
+                    .offset(y = nodeSize + 4.dp)
             )
-            
-            // 时间和时间点
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.fillMaxHeight(),
-                verticalArrangement = Arrangement.Center
-            ) {
-                // 时间点
-                Box(
-                    modifier = Modifier
-                        .size(10.dp)
-                        .clip(CircleShape)
-                        .background(
-                            if (todo.isCompleted) MaterialTheme.colorScheme.primary.copy(alpha = 0.6f)
-                            else MaterialTheme.colorScheme.primary
-                        )
-                )
-                
-                Spacer(modifier = Modifier.height(4.dp))
-                
-                // 时间
-                Text(
-                    text = formatTime(todo.createdAt),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
         }
         
         // Todo卡片 - 使用FlipCard
@@ -486,7 +529,7 @@ fun TimelineItem(
             ),
             modifier = Modifier
                 .weight(1f)
-                .padding(bottom = 8.dp)
+                .padding(bottom = spacerBetweenNodes)
         ) {
             FlipCard(
                 cardFace = manualCardFace,
@@ -494,8 +537,8 @@ fun TimelineItem(
                 onToggleCompleted = onToggleCompleted,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .heightIn(min = 70.dp)
                     .onGloballyPositioned { coordinates ->
+                        // 确保每次布局时都更新高度
                         cardHeight = coordinates.size.height
                     },
                 front = {
@@ -692,6 +735,11 @@ fun TodoCardContent(
                             MaterialTheme.colorScheme.onSurface
                     )
                 }
+            }
+            
+            // 如果没有描述和截止日期，添加一个最小高度空间
+            if (todo.description.isBlank() && todo.dueDate == null) {
+                Spacer(modifier = Modifier.height(24.dp))
             }
         }
     }

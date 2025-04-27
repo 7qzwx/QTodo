@@ -13,10 +13,7 @@ val semiBold = FontWeight.SemiBold
 val bold = FontWeight.Bold
 
 // 加载自定义字体
-val QcustomFont = FontFamily(
-    Font(R.font.lxgwkaiti_regular),
-    Font(R.font.baoshijienum, FontWeight.Bold)
-)
+val QcustomFont = FontFamily.Default
 /**
  * 使用方法：
  *

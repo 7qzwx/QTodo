@@ -1,4 +1,3 @@
-
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -20,8 +19,8 @@ android {
         applicationId = "qzwx.app.qtodo"
         minSdk = 26
         targetSdk = 35
-        versionCode = 1
-        versionName = "1.0.1"
+        versionCode = 2
+        versionName = "1.0.2"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -41,7 +40,7 @@ android {
         variant.outputs.map { it as com.android.build.gradle.internal.api.BaseVariantOutputImpl }
             .forEach { output ->
                 val outputFileName =
-                    "QTodo_${variant.versionName}_${variant.versionCode}_release_${
+                    "QTodo_${variant.versionName}_${
                         SimpleDateFormat(
                             "MMdd",
                             Locale.getDefault()
@@ -78,6 +77,9 @@ dependencies {
     ksp("com.google.dagger:hilt-compiler:2.51.1") // 使用 KSP 处理器
     //--------约束布局----------
     implementation ("androidx.constraintlayout:constraintlayout-compose:1.0.1")
+    //---------ViewPager---------
+    implementation("androidx.compose.foundation:foundation:1.8.0")
+    implementation("androidx.compose.foundation:foundation-layout:1.8.0")
     //---------Room数据库---------
     val room_version = "2.6.1"
 

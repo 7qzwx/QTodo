@@ -49,9 +49,9 @@ fun QDemoTheme(
         // 设置系统 状态栏颜色跟背景一致
     val systemUiController = rememberSystemUiController()
     val syscolor = if (isSystemInDarkTheme()) {
-        Color(0xFF121212)
+        Color(0xFF141C25)
     } else {
-        Color(0xFFF5F6FA)
+        Color(0xFFF2F2F2)
     }
     val darkiconscolor = if (isSystemInDarkTheme()) {
         false
