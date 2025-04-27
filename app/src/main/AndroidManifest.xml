@@ -77,6 +77,8 @@
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
                 <action android:name="qzwx.app.qtodo.widgets.ACTION_REFRESH_WIDGET" />
+                <action android:name="qzwx.app.qtodo.widgets.ACTION_SHOW_ACTIVE" />
+                <action android:name="qzwx.app.qtodo.widgets.ACTION_SHOW_COMPLETED" />
                 <action android:name="android.intent.action.VIEW" />
             </intent-filter>
             <meta-data
@@ -87,6 +89,12 @@
         <!-- 注册小组件远程视图服务 -->
         <service
             android:name="qzwx.app.qtodo.widgets.WidgetRemoteViewsService"
+            android:permission="android.permission.BIND_REMOTEVIEWS"
+            android:exported="false" />
+            
+        <!-- 注册已完成待办项远程视图服务 -->
+        <service
+            android:name="qzwx.app.qtodo.widgets.CompletedWidgetService"
             android:permission="android.permission.BIND_REMOTEVIEWS"
             android:exported="false" />
         

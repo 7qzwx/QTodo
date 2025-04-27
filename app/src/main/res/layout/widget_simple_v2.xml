@@ -1,0 +1,193 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#E8F5E9">
+
+    <!-- 标题行 -->
+    <LinearLayout 
+        android:id="@+id/widget_header"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:orientation="horizontal"
+        android:background="#81C784"
+        android:padding="8dp"
+        android:elevation="2dp">
+        
+        <!-- 设置按钮 -->
+        <ImageView
+            android:id="@+id/widget_btn_settings"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:src="@android:drawable/ic_menu_manage"
+            android:tint="#FFFFFF" />
+            
+        <!-- 标题 -->
+        <TextView
+            android:id="@+id/widget_title"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="QTodo待办清单"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:textColor="#FFFFFF"
+            android:gravity="center" />
+            
+        <!-- 刷新按钮 -->
+        <ImageView
+            android:id="@+id/widget_btn_refresh"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:src="@android:drawable/ic_popup_sync"
+            android:tint="#FFFFFF" />
+    </LinearLayout>
+
+    <!-- 底部切换栏+计数 -->
+    <LinearLayout
+        android:id="@+id/widget_bottom_bar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:orientation="vertical"
+        android:background="#C8E6C9">
+        
+        <!-- 切换按钮区域 -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+            
+            <!-- 待办按钮 -->
+            <TextView
+                android:id="@+id/btn_show_active"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="待办"
+                android:textColor="#FFFFFF"
+                android:textSize="14sp"
+                android:gravity="center"
+                android:paddingTop="6dp"
+                android:paddingBottom="6dp"
+                android:background="#66BB6A" />
+                
+            <!-- 已完成按钮 -->
+            <TextView
+                android:id="@+id/btn_show_completed"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="已完成"
+                android:textColor="#81C784"
+                android:textSize="14sp"
+                android:gravity="center"
+                android:paddingTop="6dp"
+                android:paddingBottom="6dp"
+                android:background="#E8F5E9" />
+        </LinearLayout>
+        
+        <!-- 计数显示 -->
+        <TextView
+            android:id="@+id/widget_todo_count"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="0/0 项待办事项"
+            android:textSize="12sp"
+            android:textColor="#2E7D32"
+            android:gravity="center"
+            android:padding="4dp" />
+    </LinearLayout>
+
+    <!-- 待办事项列表 -->
+    <ListView
+        android:id="@+id/todo_list_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@id/widget_header"
+        android:layout_above="@id/widget_bottom_bar"
+        android:divider="#AACFD8DC"
+        android:dividerHeight="1dp"
+        android:background="#F1F8E9" />
+    
+    <!-- 已完成事项列表 -->
+    <ListView
+        android:id="@+id/completed_list_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@id/widget_header"
+        android:layout_above="@id/widget_bottom_bar"
+        android:divider="#AACFD8DC"
+        android:dividerHeight="1dp"
+        android:background="#F1F8E9"
+        android:visibility="gone" />
+        
+    <!-- 空状态视图 - 待办 -->
+    <RelativeLayout
+        android:id="@+id/widget_empty_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@id/widget_header"
+        android:layout_above="@id/widget_bottom_bar"
+        android:background="#F1F8E9">
+        
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:gravity="center"
+            android:orientation="vertical">
+            
+            <ImageView
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:src="@android:drawable/ic_menu_info_details"
+                android:tint="#81C784"
+                android:alpha="0.7" />
+                
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="暂无待办事项"
+                android:textSize="14sp"
+                android:textColor="#689F38"
+                android:layout_marginTop="8dp" />
+        </LinearLayout>
+    </RelativeLayout>
+    
+    <!-- 空状态视图 - 已完成 -->
+    <RelativeLayout
+        android:id="@+id/completed_empty_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@id/widget_header"
+        android:layout_above="@id/widget_bottom_bar"
+        android:background="#F1F8E9"
+        android:visibility="gone">
+        
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:gravity="center"
+            android:orientation="vertical">
+            
+            <ImageView
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:src="@android:drawable/ic_menu_info_details"
+                android:tint="#81C784"
+                android:alpha="0.7" />
+                
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="暂无已完成事项"
+                android:textSize="14sp"
+                android:textColor="#689F38"
+                android:layout_marginTop="8dp" />
+        </LinearLayout>
+    </RelativeLayout>
+
+</RelativeLayout> 
