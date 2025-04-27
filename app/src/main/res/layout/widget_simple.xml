@@ -61,7 +61,9 @@
             android:text="今日已完成"
             android:textSize="12sp"
             android:textColor="#388E3C"
-            android:textStyle="italic" />
+            android:textStyle="italic"
+            android:ellipsize="end"
+            android:maxLines="1" />
             
         <!-- 已完成项目1 -->
         <LinearLayout
@@ -85,7 +87,8 @@
             <!-- 已完成文本 -->
             <TextView
                 android:id="@+id/completed_title_1"
-                android:layout_width="match_parent"
+                android:layout_width="0dp"
+                android:layout_weight="1"
                 android:layout_height="wrap_content"
                 android:text="已完成项目1"
                 android:textSize="12sp"
@@ -116,7 +119,8 @@
             <!-- 已完成文本 -->
             <TextView
                 android:id="@+id/completed_title_2"
-                android:layout_width="match_parent"
+                android:layout_width="0dp"
+                android:layout_weight="1"
                 android:layout_height="wrap_content"
                 android:text="已完成项目2"
                 android:textSize="12sp"
@@ -134,7 +138,9 @@
             android:textSize="12sp"
             android:textColor="#9E9E9E"
             android:paddingTop="4dp"
-            android:paddingStart="12dp" />
+            android:paddingStart="12dp"
+            android:ellipsize="end"
+            android:maxLines="1" />
     </LinearLayout>
 
     <!-- 底部计数 - 居中显示 -->
