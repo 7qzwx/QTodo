@@ -149,7 +149,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="暂无待办事项"
+                android:text="暂无待办，快去添加吧！"
                 android:textSize="14sp"
                 android:textColor="#689F38"
                 android:layout_marginTop="8dp" />
@@ -183,7 +183,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="暂无已完成事项"
+                android:text="还没有完成的待办哦！"
                 android:textSize="14sp"
                 android:textColor="#689F38"
                 android:layout_marginTop="8dp" />
