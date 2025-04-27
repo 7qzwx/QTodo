@@ -2,4 +2,10 @@
 <resources>
 
     <style name="Theme.QTodo" parent="android:Theme.Material.Light.NoActionBar" />
+
+    <style name="Theme.QTodo.Dialog" parent="android:Theme.Material.Light.Dialog">
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowMinWidthMajor">90%</item>
+        <item name="android:windowMinWidthMinor">90%</item>
+    </style>
 </resources>

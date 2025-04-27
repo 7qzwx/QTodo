@@ -13,6 +13,30 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.QTodo"
         tools:targetApi="31">
+        
+        <!-- 注册小组件设置Activity -->
+        <activity
+            android:name="qzwx.app.qtodo.widgets.WidgetSettingsActivity"
+            android:exported="true"
+            android:theme="@style/Theme.QTodo.Dialog">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_CONFIGURE" />
+            </intent-filter>
+        </activity>
+        
+        <!-- 注册小组件 -->
+        <receiver
+            android:name="qzwx.app.qtodo.widgets.SimpleAppWidget"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="qzwx.app.qtodo.widgets.ACTION_REFRESH_WIDGET" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/simple_app_widget_info" />
+        </receiver>
+        
         <activity
             android:name=".MainActivity"
             android:exported="true"

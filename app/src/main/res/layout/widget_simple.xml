@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="12dp"
+    android:background="@drawable/widget_background">
+
+    <!-- 头部标题和按钮 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginBottom="8dp">
+
+        <!-- 设置按钮 -->
+        <ImageView
+            android:id="@+id/widget_btn_settings"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:src="@android:drawable/ic_menu_preferences"
+            android:background="?android:attr/selectableItemBackgroundBorderless"
+            android:padding="2dp"
+            android:contentDescription="设置"/>
+
+        <!-- 标题 -->
+        <TextView
+            android:id="@+id/widget_title"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="QTodo待办事项"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:textColor="#FFFFFF"
+            android:gravity="center"/>
+
+        <!-- 刷新按钮 -->
+        <ImageView
+            android:id="@+id/widget_btn_refresh"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:src="@android:drawable/ic_menu_rotate"
+            android:background="?android:attr/selectableItemBackgroundBorderless"
+            android:padding="2dp"
+            android:contentDescription="刷新"/>
+
+    </LinearLayout>
+
+    <!-- 待办内容 -->
+    <LinearLayout
+        android:id="@+id/todos_container"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:background="#44000000"
+        android:padding="8dp">
+
+        <!-- 待办事项1 -->
+        <TextView
+            android:id="@+id/todo_title_1"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="待办事项1"
+            android:textSize="14sp"
+            android:textColor="#FFFFFF"
+            android:paddingVertical="4dp"
+            android:visibility="gone"/>
+
+        <!-- 待办事项2 -->
+        <TextView
+            android:id="@+id/todo_title_2"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="待办事项2"
+            android:textSize="14sp"
+            android:textColor="#FFFFFF"
+            android:paddingVertical="4dp"
+            android:visibility="gone"/>
+
+        <!-- 待办事项3 -->
+        <TextView
+            android:id="@+id/todo_title_3"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="待办事项3"
+            android:textSize="14sp"
+            android:textColor="#FFFFFF"
+            android:paddingVertical="4dp"
+            android:visibility="gone"/>
+
+        <!-- 没有待办事项提示 -->
+        <TextView
+            android:id="@+id/no_todos_text"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="没有待办事项"
+            android:textSize="14sp"
+            android:textColor="#AAAAAA"
+            android:gravity="center"
+            android:padding="8dp"/>
+    </LinearLayout>
+
+    <!-- 底部信息 -->
+    <TextView
+        android:id="@+id/widget_todo_count"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="0/0 项任务"
+        android:textSize="12sp"
+        android:textColor="#DDDDDD"
+        android:gravity="center"
+        android:layout_marginTop="8dp"/>
+
+</LinearLayout>
