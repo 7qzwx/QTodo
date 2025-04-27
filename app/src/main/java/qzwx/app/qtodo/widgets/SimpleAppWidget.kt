@@ -31,12 +31,24 @@ class SimpleAppWidget : AppWidgetProvider() {
         for (appWidgetId in appWidgetIds) {
             updateAppWidget(context, appWidgetManager, appWidgetId)
         }
+        Log.d(TAG, "小组件onUpdate完成")
+    }
+    
+    override fun onEnabled(context: Context) {
+        super.onEnabled(context)
+        Log.d(TAG, "小组件已启用")
+    }
+    
+    override fun onDisabled(context: Context) {
+        super.onDisabled(context)
+        Log.d(TAG, "小组件已禁用")
     }
     
     /**
      * 接收广播事件
      */
     override fun onReceive(context: Context, intent: Intent) {
+        Log.d(TAG, "小组件接收到广播：${intent.action}")
         super.onReceive(context, intent)
         
         // 处理刷新操作
@@ -68,9 +80,34 @@ class SimpleAppWidget : AppWidgetProvider() {
             
             // 创建小组件视图
             val views = RemoteViews(context.packageName, R.layout.widget_simple)
+            Log.d(TAG, "创建RemoteViews完成")
             
             // 设置默认文本
-            views.setTextViewText(R.id.widget_title, "QTodo待办事项")
+            views.setTextViewText(R.id.widget_title, "QTodo待办清单")
+            
+            // 创建跳转到主应用的Intent
+            val mainIntent = Intent()
+            mainIntent.setClassName(context.packageName, "qzwx.app.qtodo.MainActivity")
+            mainIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            
+            // 设置整个小组件标题点击事件 - 跳转到主页的待办清单tab
+            val todoIntent = Intent(mainIntent)
+            todoIntent.putExtra("navigate_to", "todo")
+            
+            val pendingIntentFlags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            } else {
+                PendingIntent.FLAG_UPDATE_CURRENT
+            }
+            
+            val pendingTodoIntent = PendingIntent.getActivity(
+                context, 
+                1001, 
+                todoIntent, 
+                pendingIntentFlags
+            )
+            views.setOnClickPendingIntent(R.id.widget_title, pendingTodoIntent)
+            Log.d(TAG, "设置标题点击事件完成")
             
             // 设置设置按钮点击事件
             val settingsIntent = Intent(context, WidgetSettingsActivity::class.java)
@@ -79,13 +116,10 @@ class SimpleAppWidget : AppWidgetProvider() {
                 context, 
                 appWidgetId, 
                 settingsIntent, 
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-                } else {
-                    PendingIntent.FLAG_UPDATE_CURRENT
-                }
+                pendingIntentFlags
             )
             views.setOnClickPendingIntent(R.id.widget_btn_settings, pendingSettingsIntent)
+            Log.d(TAG, "设置设置按钮点击事件完成")
             
             // 设置刷新按钮点击事件
             val refreshIntent = Intent(context, SimpleAppWidget::class.java)
@@ -94,13 +128,10 @@ class SimpleAppWidget : AppWidgetProvider() {
                 context, 
                 appWidgetId, 
                 refreshIntent, 
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-                } else {
-                    PendingIntent.FLAG_UPDATE_CURRENT
-                }
+                pendingIntentFlags
             )
             views.setOnClickPendingIntent(R.id.widget_btn_refresh, pendingRefreshIntent)
+            Log.d(TAG, "设置刷新按钮点击事件完成")
             
             // 获取数据服务
             val dataService = WidgetDataService(context)
@@ -108,27 +139,29 @@ class SimpleAppWidget : AppWidgetProvider() {
             // 更新待办事项计数
             try {
                 val (activeTodos, totalTodos) = dataService.getTodoCount()
-                views.setTextViewText(R.id.widget_todo_count, "$activeTodos/$totalTodos 项任务")
+                views.setTextViewText(R.id.widget_todo_count, "$activeTodos/$totalTodos 项待办事项")
                 Log.d(TAG, "待办事项计数: $activeTodos/$totalTodos")
             } catch (e: Exception) {
                 Log.e(TAG, "获取待办事项计数失败: ${e.message}")
-                views.setTextViewText(R.id.widget_todo_count, "0/0 项任务")
+                views.setTextViewText(R.id.widget_todo_count, "0/0 项待办事项")
             }
             
             // 先隐藏所有待办事项文本
             views.setViewVisibility(R.id.todo_title_1, View.GONE)
             views.setViewVisibility(R.id.todo_title_2, View.GONE)
             views.setViewVisibility(R.id.todo_title_3, View.GONE)
+            views.setViewVisibility(R.id.todo_title_4, View.GONE)
+            
+            // 默认先显示提示文本
+            views.setViewVisibility(R.id.no_todos_text, View.VISIBLE)
             
             // 获取活跃的待办事项
             try {
-                val todos = dataService.getActiveTodos(3)
+                val todos = dataService.getActiveTodos(4) // 现在获取4个待办项
                 Log.d(TAG, "获取到 ${todos.size} 个待办事项")
                 
                 // 显示待办事项
-                if (todos.isEmpty()) {
-                    views.setViewVisibility(R.id.no_todos_text, View.VISIBLE)
-                } else {
+                if (todos.isNotEmpty()) {
                     views.setViewVisibility(R.id.no_todos_text, View.GONE)
                     
                     // 更新第一个待办事项
@@ -151,18 +184,39 @@ class SimpleAppWidget : AppWidgetProvider() {
                         views.setTextViewText(R.id.todo_title_3, todos[2].title)
                         Log.d(TAG, "设置待办事项3: ${todos[2].title}")
                     }
+                    
+                    // 更新第四个待办事项
+                    if (todos.size > 3) {
+                        views.setViewVisibility(R.id.todo_title_4, View.VISIBLE)
+                        views.setTextViewText(R.id.todo_title_4, todos[3].title)
+                        Log.d(TAG, "设置待办事项4: ${todos[3].title}")
+                    }
                 }
             } catch (e: Exception) {
                 Log.e(TAG, "处理待办事项失败: ${e.message}")
-                views.setViewVisibility(R.id.no_todos_text, View.VISIBLE)
+                e.printStackTrace()
             }
             
             // 更新小组件
+            Log.d(TAG, "准备更新AppWidget: $appWidgetId")
             appWidgetManager.updateAppWidget(appWidgetId, views)
             Log.d(TAG, "小组件更新完成")
             
         } catch (e: Exception) {
             Log.e(TAG, "小组件更新过程中发生异常: ${e.message}")
+            e.printStackTrace()
+            
+            // 尝试显示基本内容
+            try {
+                val views = RemoteViews(context.packageName, R.layout.widget_simple)
+                views.setTextViewText(R.id.widget_title, "QTodo待办清单")
+                views.setTextViewText(R.id.widget_todo_count, "加载中...")
+                views.setViewVisibility(R.id.no_todos_text, View.VISIBLE)
+                appWidgetManager.updateAppWidget(appWidgetId, views)
+                Log.d(TAG, "小组件异常后恢复显示")
+            } catch (e2: Exception) {
+                Log.e(TAG, "小组件恢复显示失败: ${e2.message}")
+            }
         }
     }
 }
