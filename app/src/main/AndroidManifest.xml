@@ -77,11 +77,18 @@
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
                 <action android:name="qzwx.app.qtodo.widgets.ACTION_REFRESH_WIDGET" />
+                <action android:name="android.intent.action.VIEW" />
             </intent-filter>
             <meta-data
                 android:name="android.appwidget.provider"
                 android:resource="@xml/simple_app_widget_info" />
         </receiver>
+        
+        <!-- 注册小组件远程视图服务 -->
+        <service
+            android:name="qzwx.app.qtodo.widgets.WidgetRemoteViewsService"
+            android:permission="android.permission.BIND_REMOTEVIEWS"
+            android:exported="false" />
         
         <!-- 注册小组件设置Activity -->
         <activity

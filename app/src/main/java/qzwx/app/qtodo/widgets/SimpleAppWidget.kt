@@ -6,9 +6,9 @@ import android.appwidget.AppWidgetProvider
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import android.os.Build
 import android.util.Log
-import android.view.View
 import android.widget.RemoteViews
 import qzwx.app.qtodo.R
 
@@ -20,6 +20,7 @@ class SimpleAppWidget : AppWidgetProvider() {
     
     companion object {
         const val ACTION_REFRESH_WIDGET = "qzwx.app.qtodo.widgets.ACTION_REFRESH_WIDGET"
+        const val EXTRA_ITEM_POSITION = "qzwx.app.qtodo.widgets.EXTRA_ITEM_POSITION"
     }
 
     override fun onUpdate(
@@ -54,11 +55,15 @@ class SimpleAppWidget : AppWidgetProvider() {
         // 处理刷新操作
         if (ACTION_REFRESH_WIDGET == intent.action) {
             Log.d(TAG, "收到手动刷新广播")
-            // 获取所有小组件ID
+            
+            // 通知AppWidgetManager刷新小组件
             val appWidgetManager = AppWidgetManager.getInstance(context)
             val appWidgetIds = appWidgetManager.getAppWidgetIds(
                 ComponentName(context, SimpleAppWidget::class.java)
             )
+            
+            // 通知列表数据已更改
+            appWidgetManager.notifyAppWidgetViewDataChanged(appWidgetIds, R.id.todo_list_view)
             
             // 更新所有小组件
             for (appWidgetId in appWidgetIds) {
@@ -133,6 +138,29 @@ class SimpleAppWidget : AppWidgetProvider() {
             views.setOnClickPendingIntent(R.id.widget_btn_refresh, pendingRefreshIntent)
             Log.d(TAG, "设置刷新按钮点击事件完成")
             
+            // 设置ListView的适配器
+            val serviceIntent = Intent(context, WidgetRemoteViewsService::class.java)
+            serviceIntent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
+            serviceIntent.data = Uri.parse(serviceIntent.toUri(Intent.URI_INTENT_SCHEME))
+            views.setRemoteAdapter(R.id.todo_list_view, serviceIntent)
+            
+            // 设置空视图
+            views.setEmptyView(R.id.todo_list_view, R.id.widget_empty_view)
+            
+            // 设置列表项点击事件模板
+            val itemClickIntent = Intent(context, SimpleAppWidget::class.java)
+            itemClickIntent.action = Intent.ACTION_VIEW
+            itemClickIntent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
+            itemClickIntent.data = Uri.parse(itemClickIntent.toUri(Intent.URI_INTENT_SCHEME))
+            
+            val clickPendingIntent = PendingIntent.getBroadcast(
+                context,
+                0,
+                itemClickIntent,
+                pendingIntentFlags
+            )
+            views.setPendingIntentTemplate(R.id.todo_list_view, clickPendingIntent)
+            
             // 获取数据服务
             val dataService = WidgetDataService(context)
             
@@ -146,60 +174,12 @@ class SimpleAppWidget : AppWidgetProvider() {
                 views.setTextViewText(R.id.widget_todo_count, "0/0 项待办事项")
             }
             
-            // 先隐藏所有待办事项文本
-            views.setViewVisibility(R.id.todo_title_1, View.GONE)
-            views.setViewVisibility(R.id.todo_title_2, View.GONE)
-            views.setViewVisibility(R.id.todo_title_3, View.GONE)
-            views.setViewVisibility(R.id.todo_title_4, View.GONE)
-            
-            // 默认先显示提示文本
-            views.setViewVisibility(R.id.no_todos_text, View.VISIBLE)
-            
-            // 获取活跃的待办事项
-            try {
-                val todos = dataService.getActiveTodos(4) // 现在获取4个待办项
-                Log.d(TAG, "获取到 ${todos.size} 个待办事项")
-                
-                // 显示待办事项
-                if (todos.isNotEmpty()) {
-                    views.setViewVisibility(R.id.no_todos_text, View.GONE)
-                    
-                    // 更新第一个待办事项
-                    if (todos.size > 0) {
-                        views.setViewVisibility(R.id.todo_title_1, View.VISIBLE)
-                        views.setTextViewText(R.id.todo_title_1, todos[0].title)
-                        Log.d(TAG, "设置待办事项1: ${todos[0].title}")
-                    }
-                    
-                    // 更新第二个待办事项
-                    if (todos.size > 1) {
-                        views.setViewVisibility(R.id.todo_title_2, View.VISIBLE)
-                        views.setTextViewText(R.id.todo_title_2, todos[1].title)
-                        Log.d(TAG, "设置待办事项2: ${todos[1].title}")
-                    }
-                    
-                    // 更新第三个待办事项
-                    if (todos.size > 2) {
-                        views.setViewVisibility(R.id.todo_title_3, View.VISIBLE)
-                        views.setTextViewText(R.id.todo_title_3, todos[2].title)
-                        Log.d(TAG, "设置待办事项3: ${todos[2].title}")
-                    }
-                    
-                    // 更新第四个待办事项
-                    if (todos.size > 3) {
-                        views.setViewVisibility(R.id.todo_title_4, View.VISIBLE)
-                        views.setTextViewText(R.id.todo_title_4, todos[3].title)
-                        Log.d(TAG, "设置待办事项4: ${todos[3].title}")
-                    }
-                }
-            } catch (e: Exception) {
-                Log.e(TAG, "处理待办事项失败: ${e.message}")
-                e.printStackTrace()
-            }
-            
             // 更新小组件
             Log.d(TAG, "准备更新AppWidget: $appWidgetId")
             appWidgetManager.updateAppWidget(appWidgetId, views)
+            
+            // 通知列表数据变化
+            appWidgetManager.notifyAppWidgetViewDataChanged(appWidgetId, R.id.todo_list_view)
             Log.d(TAG, "小组件更新完成")
             
         } catch (e: Exception) {
@@ -211,7 +191,6 @@ class SimpleAppWidget : AppWidgetProvider() {
                 val views = RemoteViews(context.packageName, R.layout.widget_simple)
                 views.setTextViewText(R.id.widget_title, "QTodo待办清单")
                 views.setTextViewText(R.id.widget_todo_count, "加载中...")
-                views.setViewVisibility(R.id.no_todos_text, View.VISIBLE)
                 appWidgetManager.updateAppWidget(appWidgetId, views)
                 Log.d(TAG, "小组件异常后恢复显示")
             } catch (e2: Exception) {
