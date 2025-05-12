@@ -12,6 +12,7 @@ object NavRoutes {
     const val TodoDetailPage = "TodoDetailPage"
     const val DiaryDetailPage = "DiaryDetailPage"
     const val DiarySearchPage = "DiarySearchPage"
+    const val AddTodoPage = "AddTodoPage"
 
     // 需要显示底部导航的路径集合
     val bottomNavScreens = setOf(

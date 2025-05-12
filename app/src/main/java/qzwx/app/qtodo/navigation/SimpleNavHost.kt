@@ -10,7 +10,9 @@ import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import qzwx.app.qtodo.page.diarypage.DiaryDetailPage
 import qzwx.app.qtodo.page.diarypage.SearchPage
+import qzwx.app.qtodo.page.todopage.AddTodoPage
 import qzwx.app.qtodo.page.todopage.TodoDetailPage
+import qzwx.app.qtodo.page.todopage.TodoPage
 
 /**
  * 简化版的NavHost，只处理详情页和搜索页等非主页面的导航
@@ -26,9 +28,17 @@ fun SimpleNavHost(
         startDestination = NavRoutes.TodoPage,
         modifier = modifier.fillMaxSize()
     ) {
-        // 为主页面设置空白导航目标
-        // 实际内容由MainActivity中的ViewPager提供
-        composable(NavRoutes.TodoPage) { }
+        // 为主页面设置导航目标
+        composable(NavRoutes.TodoPage) { 
+            TodoPage(
+                onTodoClick = { todoId ->
+                    navController.navigate("${NavRoutes.TodoDetailPage}/$todoId")
+                },
+                onAddTodoClick = {
+                    navController.navigate(NavRoutes.AddTodoPage)
+                }
+            )
+        }
         composable(NavRoutes.CalandarPage) { }
         composable(NavRoutes.NotePage) { }
         
@@ -43,6 +53,14 @@ fun SimpleNavHost(
             TodoDetailPage(
                 todoId = todoId,
                 onNavigateBack = { navController.popBackStack() }
+            )
+        }
+        
+        // 添加待办页面路由
+        composable(NavRoutes.AddTodoPage) {
+            AddTodoPage(
+                onNavigateBack = { navController.popBackStack() },
+                onSuccess = { navController.popBackStack() }
             )
         }
         

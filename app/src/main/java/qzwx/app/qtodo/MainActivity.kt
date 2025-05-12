@@ -165,6 +165,9 @@ fun MainContent(
             0 -> TodoPage(
                 onTodoClick = { todoId ->
                     onNavigateToDetail("${NavRoutes.TodoDetailPage}/$todoId")
+                },
+                onAddTodoClick = {
+                    onNavigateToDetail(NavRoutes.AddTodoPage)
                 }
             )
             1 -> CalendarPage()
